@@ -31,6 +31,19 @@ test("logout", async () => {
     expect(logoutRes.body).toEqual({ message: "logout successful" });
 });
 
+test("bad auth token", async () => {
+  const logoutRes = await request(app).delete("/api/auth").set("Authorization", `Bearer bad-token`);
+  expect(logoutRes.status).toBe(401);
+  expect(logoutRes.body).toEqual({ message: "unauthorized" });
+});
+
+test("bad register", async () => {
+    const badUser = { name: "pizza diner", password: "a" };
+    const registerRes = await request(app).post("/api/auth").send(badUser);
+    expect(registerRes.status).toBe(400);
+    expect(registerRes.body).toEqual({ message: "name, email, and password are required" });
+});
+
 function expectValidJwt(potentialJwt) {
   expect(potentialJwt).toMatch(
     /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
