@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../service");
+const { Role, DB } = require("../database/database.js");
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
@@ -44,8 +45,45 @@ test("bad register", async () => {
     expect(registerRes.body).toEqual({ message: "name, email, and password are required" });
 });
 
+test("update user", async () => {
+    const updateUser = { email: randomName() + "@test.com", password: "b" };
+    const adminUser = await createAdminUser();
+    const loginAdminRes = await request(app).put("/api/auth").send(adminUser);
+    expect(loginAdminRes.status).toBe(200);
+    expectValidJwt(loginAdminRes.body.token);
+    const adminAuthToken = loginAdminRes.body.token;
+    const updateUserRes = await request(app).put("/api/auth/10").set("Authorization", `Bearer ${adminAuthToken}`).send(updateUser);
+    expect(updateUserRes.status).toBe(200);
+    expect(updateUserRes.body.email).toEqual(updateUser.email);
+    expect(updateUserRes.body.id).toEqual(10);
+});
+
+test("update user not admin", async () => {
+    const updateUser = { email: randomName() + "@test.com", password: "b" };
+    const nonAdminUser = { name: "pizza diner", email: randomName() + "@test.com", password: "a" };
+    const registerRes = await request(app).post("/api/auth").send(nonAdminUser);
+    const nonAdminUserAuthToken = registerRes.body.token;
+    expectValidJwt(nonAdminUserAuthToken);
+    const updateUserRes = await request(app).put("/api/auth/100").set("Authorization", `Bearer ${nonAdminUserAuthToken}`).send(updateUser);
+    expect(updateUserRes.status).toBe(403);
+    expect(updateUserRes.body).toEqual({ message: "unauthorized" });
+});
+
 function expectValidJwt(potentialJwt) {
   expect(potentialJwt).toMatch(
     /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
   );
+}
+
+function randomName() {
+  return Math.random().toString(36).substring(2, 12);
+}
+
+async function createAdminUser() {
+  let user = { password: "toomanysecrets", roles: [{ role: Role.Admin }] };
+  user.name = randomName();
+  user.email = user.name + "@admin.com";
+
+  user = await DB.addUser(user);
+  return { ...user, password: "toomanysecrets" };
 }
