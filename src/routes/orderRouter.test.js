@@ -15,6 +15,8 @@ let testUserAuthToken;
 
 let testAdmin;
 let testAdminAuthToken;
+let order1;
+let order2;
 
 if (process.env.VSCODE_INSPECTOR_OPTIONS) {
   jest.setTimeout(60 * 1000 * 5); // 5 minutes
@@ -25,6 +27,7 @@ beforeAll(async () => {
   testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
   const registerRes = await request(app).post("/api/auth").send(testUser);
   testUserAuthToken = registerRes.body.token;
+  testUser.id = registerRes.body.user.id;
   expectValidJwt(testUserAuthToken);
 
   // create test admin
@@ -33,6 +36,26 @@ beforeAll(async () => {
   testAdminAuthToken = loginAdminRes.body.token;
   testAdmin.id = loginAdminRes.body.user.id;
   expectValidJwt(testAdminAuthToken);
+
+  // create orders
+    order1 = {
+        dinerId: testUser.id,
+        franchiseId: 1,
+        storeId: 1,
+        items: [{ menuId: 1, description: "Veggie", price: 0.0038 }],
+    };
+    order2 = {
+        dinerId: testUser.id,
+        franchiseId: 1,
+        storeId: 1,
+        items: [{ menuId: 1, description: "Veggie", price: 0.0038 }],
+    };
+    const orderRes1 = await request(app).post("/api/order").set("Authorization", `Bearer ${testUserAuthToken}`).send(order1);
+    const orderRes2 = await request(app).post("/api/order").set("Authorization", `Bearer ${testUserAuthToken}`).send(order2);
+    expect(orderRes1.status).toBe(200);
+    expect(orderRes2.status).toBe(200);
+    order1 = orderRes1.body.order;
+    order2 = orderRes2.body.order;
 });
 
 test("get menu", async () => {
@@ -65,6 +88,15 @@ test("add menu item as diner", async () => {
     const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testUserAuthToken}`).send(newMenuItem);
     expect(addItemRes.status).toBe(403);
     expect(addItemRes.body.message).toEqual("unable to add menu item");
+});
+
+test("get orders", async () => {
+    const res = await request(app).get("/api/order").set("Authorization", `Bearer ${testUserAuthToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.dinerId).toBe(testUser.id);
+    expect(res.body.orders.length).toEqual(2);
+    expect(res.body.orders[0].items[0].description).toEqual(order1.items[0].description);
+    expect(res.body.orders[1].items[0].description).toEqual(order2.items[0].description);
 });
 
 function expectValidJwt(potentialJwt) {
