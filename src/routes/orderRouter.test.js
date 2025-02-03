@@ -10,11 +10,49 @@ const pizza1 = {
   title: "Veggie",
 };
 
+const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
+let testUserAuthToken;
+
+let testAdmin;
+let testAdminAuthToken;
+
+if (process.env.VSCODE_INSPECTOR_OPTIONS) {
+  jest.setTimeout(60 * 1000 * 5); // 5 minutes
+}
+
+beforeAll(async () => {
+  // create regular test user
+  testUser.email = Math.random().toString(36).substring(2, 12) + "@test.com";
+  const registerRes = await request(app).post("/api/auth").send(testUser);
+  testUserAuthToken = registerRes.body.token;
+  expectValidJwt(testUserAuthToken);
+
+  // create test admin
+  testAdmin = await createAdminUser();
+  const loginAdminRes = await request(app).put("/api/auth").send(testAdmin);
+  testAdminAuthToken = loginAdminRes.body.token;
+  testAdmin.id = loginAdminRes.body.user.id;
+  expectValidJwt(testAdminAuthToken);
+});
+
 test("get menu", async () => {
-  const res = await request(app).get("/api/order/menu");
-  expect(res.status).toBe(200);
-  expect(res.body.length).toBeGreaterThan(0);
-  expect(res.body).toContainEqual(pizza1);
+    const res = await request(app).get("/api/order/menu");
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body).toContainEqual(pizza1);
+});
+
+test("add menu item", async () => {
+    let newMenuItem = {
+        description: "No topping, no sauce, just carbs",
+        image: "pizza9.png",
+        price: 0.0001,
+        title: "Student",
+    };
+    const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testAdminAuthToken}`).send(newMenuItem);
+    expect(addItemRes.status).toBe(200);
+    newMenuItem = addItemRes.body.find((item) => item.title === "Student");
+    expect(addItemRes.body).toContainEqual(newMenuItem);
 });
 
 function expectValidJwt(potentialJwt) {
