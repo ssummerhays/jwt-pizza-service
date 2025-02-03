@@ -2,13 +2,7 @@ const request = require("supertest");
 const app = require("../service");
 const { Role, DB } = require("../database/database.js");
 
-const pizza1 = {
-  description: "A garden of delight",
-  id: 1,
-  image: "pizza1.png",
-  price: 0.0038,
-  title: "Veggie",
-};
+let newMenuItem;
 
 const testUser = { name: "pizza diner", email: "reg@test.com", password: "a" };
 let testUserAuthToken;
@@ -38,7 +32,7 @@ beforeAll(async () => {
   expectValidJwt(testAdminAuthToken);
 
   // add test menu item
-  let newMenuItem = {
+  newMenuItem = {
     description: "No topping, no sauce, just carbs",
     image: "pizza9.png",
     price: 0.0001,
@@ -46,6 +40,7 @@ beforeAll(async () => {
   };
   const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testAdminAuthToken}`).send(newMenuItem);
   expect(addItemRes.status).toBe(200);
+  newMenuItem = addItemRes.body.find((item) => item.title === "TestItem");
 
   // create orders
     order1 = {
@@ -72,28 +67,28 @@ test("get menu", async () => {
     const res = await request(app).get("/api/order/menu");
     expect(res.status).toBe(200);
     expect(res.body.length).toBeGreaterThan(0);
-    expect(res.body).toContainEqual(pizza1);
+    expect(res.body).toContainEqual(newMenuItem);
 });
 
 test("add menu item", async () => {
     let newMenuItem = {
-        description: "No topping, no sauce, just carbs",
-        image: "pizza9.png",
-        price: 0.0001,
-        title: "TestItem",
+        description: "Lots of toppings, lots of sauce",
+        image: "pizzaTest.png",
+        price: 0.0011,
+        title: "TestItem2",
     };
     const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testAdminAuthToken}`).send(newMenuItem);
     expect(addItemRes.status).toBe(200);
-    newMenuItem = addItemRes.body.find((item) => item.title === "Student");
+    newMenuItem = addItemRes.body.find((item) => item.title === "TestItem2");
     expect(addItemRes.body).toContainEqual(newMenuItem);
 });
 
 test("bad add menu item as diner", async () => {
     let newMenuItem = {
-        description: "No topping, no sauce, just carbs",
-        image: "pizza9.png",
-        price: 0.0001,
-        title: "Student",
+        description: "This is a bad pizza",
+        image: "pizzaBad.png",
+        price: 0.1003,
+        title: "TestItem3",
     };
     const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testUserAuthToken}`).send(newMenuItem);
     expect(addItemRes.status).toBe(403);
