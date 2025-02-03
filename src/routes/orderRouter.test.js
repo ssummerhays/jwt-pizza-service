@@ -37,18 +37,28 @@ beforeAll(async () => {
   testAdmin.id = loginAdminRes.body.user.id;
   expectValidJwt(testAdminAuthToken);
 
+  // add test menu item
+  let newMenuItem = {
+    description: "No topping, no sauce, just carbs",
+    image: "pizza9.png",
+    price: 0.0001,
+    title: "TestItem",
+  };
+  const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testAdminAuthToken}`).send(newMenuItem);
+  expect(addItemRes.status).toBe(200);
+
   // create orders
     order1 = {
         dinerId: testUser.id,
         franchiseId: 1,
         storeId: 1,
-        items: [{ menuId: 1, description: "Veggie", price: 0.0038 }],
+        items: [{ menuId: 1, description: "TestItem", price: 0.0001 }],
     };
     order2 = {
         dinerId: testUser.id,
         franchiseId: 1,
         storeId: 1,
-        items: [{ menuId: 1, description: "Veggie", price: 0.0038 }],
+        items: [{ menuId: 1, description: "TestItem", price: 0.0001 }],
     };
     const orderRes1 = await request(app).post("/api/order").set("Authorization", `Bearer ${testUserAuthToken}`).send(order1);
     const orderRes2 = await request(app).post("/api/order").set("Authorization", `Bearer ${testUserAuthToken}`).send(order2);
@@ -70,7 +80,7 @@ test("add menu item", async () => {
         description: "No topping, no sauce, just carbs",
         image: "pizza9.png",
         price: 0.0001,
-        title: "Student",
+        title: "TestItem",
     };
     const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testAdminAuthToken}`).send(newMenuItem);
     expect(addItemRes.status).toBe(200);
