@@ -44,6 +44,12 @@ test("get franchises", async () => {
     expect(res.body.length).toBeGreaterThan(0);
 });
 
+test("get user franchises", async () => {
+    const res = await request(app).get(`/api/franchise/${testAdmin.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
+    expect(res.status).toBe(200);
+    expect(res.body.length).toBeGreaterThan(0);
+});
+
 afterAll(async () => {
   // delete test franchise
   const deleteRes = await request(app).delete(`/api/franchise/${testFranchise.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
