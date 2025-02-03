@@ -55,6 +55,18 @@ test("add menu item", async () => {
     expect(addItemRes.body).toContainEqual(newMenuItem);
 });
 
+test("add menu item as diner", async () => {
+    let newMenuItem = {
+        description: "No topping, no sauce, just carbs",
+        image: "pizza9.png",
+        price: 0.0001,
+        title: "Student",
+    };
+    const addItemRes = await request(app).put("/api/order/menu").set("Authorization", `Bearer ${testUserAuthToken}`).send(newMenuItem);
+    expect(addItemRes.status).toBe(403);
+    expect(addItemRes.body.message).toEqual("unable to add menu item");
+});
+
 function expectValidJwt(potentialJwt) {
   expect(potentialJwt).toMatch(
     /^[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*\.[a-zA-Z0-9\-_]*$/
