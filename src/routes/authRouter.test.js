@@ -47,15 +47,16 @@ test("bad register", async () => {
 
 test("update user", async () => {
     const updateUser = { email: randomName() + "@test.com", password: "b" };
-    const adminUser = await createAdminUser();
+    let adminUser = await createAdminUser();
     const loginAdminRes = await request(app).put("/api/auth").send(adminUser);
     expect(loginAdminRes.status).toBe(200);
     expectValidJwt(loginAdminRes.body.token);
     const adminAuthToken = loginAdminRes.body.token;
-    const updateUserRes = await request(app).put("/api/auth/10").set("Authorization", `Bearer ${adminAuthToken}`).send(updateUser);
+    adminUser = loginAdminRes.body.user;
+    const updateUserRes = await request(app).put(`/api/auth/${adminUser.id}`).set("Authorization", `Bearer ${adminAuthToken}`).send(updateUser);
     expect(updateUserRes.status).toBe(200);
     expect(updateUserRes.body.email).toEqual(updateUser.email);
-    expect(updateUserRes.body.id).toEqual(10);
+    expect(updateUserRes.body.id).toEqual(adminUser.id);
 });
 
 test("update user not admin", async () => {
