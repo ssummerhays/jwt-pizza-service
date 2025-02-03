@@ -68,9 +68,22 @@ test("create and delete store", async () => {
     expect(createStoreRes.status).toBe(200);
     expect(createStoreRes.body.name).toEqual(store.name);
 
+    // bad delete store non admin
+    const badDeleteStoreRes = await request(app).delete(`/api/franchise/${testFranchise.id}/store/${createStoreRes.body.id}`).set("Authorization", `Bearer ${testUserAuthToken}`);
+    expect(badDeleteStoreRes.status).toBe(403);
+    expect(badDeleteStoreRes.body.message).toEqual("unable to delete a store");
+
+    // successful delete store
     const deleteStoreRes = await request(app).delete(`/api/franchise/${testFranchise.id}/store/${createStoreRes.body.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
     expect(deleteStoreRes.status).toBe(200);
     expect(deleteStoreRes.body).toEqual({ message: "store deleted" });
+});
+
+test("bad create store non admin", async () => {
+    const store = { name: randomName() };
+    const createStoreRes = await request(app).post(`/api/franchise/${testFranchise.id}/store`).set("Authorization", `Bearer ${testUserAuthToken}`).send(store);
+    expect(createStoreRes.status).toBe(403);
+    expect(createStoreRes.body.message).toEqual("unable to create a store");
 });
 
 afterAll(async () => {
