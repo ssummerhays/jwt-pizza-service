@@ -62,6 +62,17 @@ test ("non admin delete franchise", async () => {
     expect(res.body.message).toEqual("unable to delete a franchise");
 });
 
+test("create and delete store", async () => {
+    const store = { name: randomName() };
+    const createStoreRes = await request(app).post(`/api/franchise/${testFranchise.id}/store`).set("Authorization", `Bearer ${testAdminAuthToken}`).send(store);
+    expect(createStoreRes.status).toBe(200);
+    expect(createStoreRes.body.name).toEqual(store.name);
+
+    const deleteStoreRes = await request(app).delete(`/api/franchise/${testFranchise.id}/store/${createStoreRes.body.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
+    expect(deleteStoreRes.status).toBe(200);
+    expect(deleteStoreRes.body).toEqual({ message: "store deleted" });
+});
+
 afterAll(async () => {
   // delete test franchise
   const deleteRes = await request(app).delete(`/api/franchise/${testFranchise.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
