@@ -78,7 +78,7 @@ test("add menu item", async () => {
     expect(addItemRes.body).toContainEqual(newMenuItem);
 });
 
-test("add menu item as diner", async () => {
+test("bad add menu item as diner", async () => {
     let newMenuItem = {
         description: "No topping, no sauce, just carbs",
         image: "pizza9.png",
