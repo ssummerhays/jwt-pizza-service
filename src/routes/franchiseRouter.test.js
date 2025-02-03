@@ -50,6 +50,18 @@ test("get user franchises", async () => {
     expect(res.body.length).toBeGreaterThan(0);
 });
 
+test("non admin create franchise", async () => {
+    const res = await request(app).post("/api/franchise").set("Authorization", `Bearer ${testUserAuthToken}`).send(testFranchise);
+    expect(res.status).toBe(403);
+    expect(res.body.message).toEqual("unable to create a franchise" );
+});
+
+test ("non admin delete franchise", async () => {
+    const res = await request(app).delete(`/api/franchise/${testFranchise.id}`).set("Authorization", `Bearer ${testUserAuthToken}`);
+    expect(res.status).toBe(403);
+    expect(res.body.message).toEqual("unable to delete a franchise");
+});
+
 afterAll(async () => {
   // delete test franchise
   const deleteRes = await request(app).delete(`/api/franchise/${testFranchise.id}`).set("Authorization", `Bearer ${testAdminAuthToken}`);
