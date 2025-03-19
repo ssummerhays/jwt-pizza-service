@@ -4,6 +4,8 @@ const config = require('../config.js');
 const { StatusCodeError } = require('../endpointHelper.js');
 const { Role } = require('../model/model.js');
 const dbModel = require('./dbModel.js');
+const metrics = require("../metrics");
+
 class DB {
   constructor() {
     this.initialized = this.initializeDatabase();
@@ -61,6 +63,7 @@ class DB {
       const userResult = await this.query(connection, `SELECT * FROM user WHERE email=?`, [email]);
       const user = userResult[0];
       if (!user || !(await bcrypt.compare(password, user.password))) {
+        metrics.trackAuth("fail");
         throw new StatusCodeError('unknown user', 404);
       }
 
@@ -69,6 +72,7 @@ class DB {
         return { objectId: r.objectId || undefined, role: r.role };
       });
 
+      metrics.trackAuth("success");
       return { ...user, roles: roles, password: undefined };
     } finally {
       connection.end();
