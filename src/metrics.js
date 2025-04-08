@@ -1,6 +1,8 @@
 const config = require("./config");
 const os = require("os");
 
+const interval = 100_000_000;
+
 const requests = {};
 let activeUsers = 0;
 
@@ -112,7 +114,7 @@ const timer = setInterval(() => {
   sendDoubleMetricToGrafana("latency", pizzaTime, {
     latency: "pizza",
   });
-}, 10000);
+}, interval);
 
 function sendDoubleMetricToGrafana(metricName, metricValue, attributes) {
   attributes = { ...attributes, source: config.metrics.source };
