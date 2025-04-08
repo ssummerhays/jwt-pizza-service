@@ -79,7 +79,6 @@ franchiseRouter.get(
   "/",
   metrics.track("get"),
   asyncHandler(async (req, res) => {
-    console.log("getFranchise hit")
     res.json(await DB.getFranchises(req.user));
   })
 );
