@@ -141,6 +141,30 @@ orderRouter.post(
   metrics.timePizza,
   asyncHandler(async (req, res) => {
     const orderReq = req.body;
+    if (orderReq.items.price <= 0) {
+      metrics.trackPizzas("fail", 0);
+      throw new Error("Bad Request: Invalid price");
+    }
+    const menu = await DB.getMenu();
+
+    for (let j = 0; j < orderReq.items.length; j++) {
+      let item = orderReq.items[j];
+
+      let isValidMenuItem = false;
+      for (let i = 0; i < menu.length; i++) {
+        let menuItem = menu[i];
+        if (menuItem.id === item.menuId) {
+          isValidMenuItem = true;
+          if (menuItem.price !== item.price) {
+            throw new Error("Bad Request: Price does not match pizza price");
+          }
+        }
+      }
+      if (!isValidMenuItem) {
+        throw new Error("Bad Request: Invalid Menu Item");
+      }
+    }
+
     const order = await DB.addDinerOrder(req.user, orderReq);
     const r = await fetch(`${config.factory.url}/api/order`, {
       method: "POST",
